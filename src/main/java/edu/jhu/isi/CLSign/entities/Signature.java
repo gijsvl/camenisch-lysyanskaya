@@ -32,11 +32,15 @@ public class Signature {
         return c;
     }
 
-    public Element getA(final int index) {
-        return A.get(index);
+    public List<Element> getAList() {
+        return A;
     }
 
-    public Element getB(final int index) {
-        return B.get(index);
+    public List<Element> getBList() {
+        return B;
+    }
+
+    public void setB(final Element b) {
+        this.b = b;
     }
 }

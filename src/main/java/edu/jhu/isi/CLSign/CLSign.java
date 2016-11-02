@@ -24,8 +24,8 @@ public class CLSign {
     }
 
     private static PublicKey createPublicKey(final Pairing pairing, final SecretKey sk) {
-        final Element generator = pairing.getG1().newRandomElement();
-        final Element generatorT = pairing.getGT().newRandomElement();
+        final Element generator = pairing.getG1().newRandomElement().getImmutable();
+        final Element generatorT = pairing.getGT().newRandomElement().getImmutable();
         final List<Element> Z = sk.getZ().stream()
                 .map(generator::powZn).collect(Collectors.toList());
         return new PublicKey(pairing, generator, generatorT,
@@ -35,10 +35,10 @@ public class CLSign {
     private static SecretKey createSecretKey(final Pairing pairing, final int messageSize) {
         final ZrElement[] z = new ZrElement[messageSize];
         for (int i = 0; i < messageSize; i++) {
-            z[i] = (ZrElement) pairing.getZr().newZeroElement();
+            z[i] = (ZrElement) pairing.getZr().newRandomElement().getImmutable();
         }
-        return new SecretKey((ZrElement) pairing.getZr().newRandomElement(),
-                (ZrElement) pairing.getZr().newRandomElement(), z);
+        return new SecretKey((ZrElement) pairing.getZr().newRandomElement().getImmutable(),
+                (ZrElement) pairing.getZr().newRandomElement().getImmutable(), z);
     }
 
     private static Pairing createPairing() {
@@ -50,22 +50,63 @@ public class CLSign {
         return PairingFactory.getPairing(params);
     }
 
-    public static Signature sign(final List<ZrElement> messages, final SecretKey sk, final PublicKey pk) {
-        final Element a = pk.getPairing().getG1().newRandomElement();
+    public static Signature sign(final List<ZrElement> messages, final KeyPair keys) {
+        final PublicKey pk = keys.getPk();
+        final SecretKey sk = keys.getSk();
+        final Element a = pk.getPairing().getG1().newRandomElement().getImmutable();
         final List<Element> A = sk.getZ().stream().map(a::powZn).collect(Collectors.toCollection(ArrayList::new));
-        final Element b = a.powZn(sk.getY());
+        final Element b = a.powZn(sk.getY()).getImmutable();
         final List<Element> B = A.stream().map(Ai -> Ai.powZn(sk.getY())).collect(Collectors.toCollection(ArrayList::new));
         final Element cPart = pk.getPairing().getG1().newOneElement();
         final ZrElement xTimesY = sk.getX().mul(sk.getY());
         for (int i = 1; i < messages.size(); i++) {
             cPart.mul(A.get(i).powZn(xTimesY.mul(messages.get(i))));
         }
-        final Element c = a.powZn(sk.getX().add(xTimesY.mul(messages.get(0)))).mul(cPart);
+        final Element c = a.powZn(sk.getX().add(xTimesY.mul(messages.get(0)))).mul(cPart).getImmutable();
 
         return new Signature(a, b, c, A, B);
     }
 
     public static boolean verify(final List<ZrElement> messages, final Signature sigma, final PublicKey pk) {
-        return false;
+        return aFormedCorrectly(sigma, pk)
+                && bFormedCorrectly(sigma, pk)
+                && cFormedCorrectly(messages, sigma, pk);
+    }
+
+    private static boolean aFormedCorrectly(final Signature sigma, final PublicKey pk) {
+        final Pairing p = pk.getPairing();
+        for (int i = 0; i < sigma.getAList().size(); i++) {
+            if (!p.pairing(sigma.getA(), pk.getZ(i))
+                    .isEqual(p.pairing(pk.getGenerator(), sigma.getAList().get(i)))) {
+                return false;
+            }
+        }
+        return true;
+    }
+
+    private static boolean bFormedCorrectly(final Signature sigma, final PublicKey pk) {
+        final Pairing p = pk.getPairing();
+        if (!p.pairing(sigma.getA(), pk.getY()).isEqual(p.pairing(pk.getGenerator(), sigma.getB()))) {
+            return false;
+        }
+        for (int i = 0; i < sigma.getBList().size(); i++) {
+            if (!p.pairing(sigma.getAList().get(i), pk.getY())
+                    .isEqual(p.pairing(pk.getGenerator(), sigma.getBList().get(i)))) {
+                return false;
+            }
+        }
+        return true;
+    }
+
+    private static boolean cFormedCorrectly(final List<ZrElement> messages, final Signature sigma, final PublicKey pk) {
+        final Pairing p = pk.getPairing();
+        final Element product = p.getGT().newOneElement();
+        for (int i = 1; i < messages.size(); i++) {
+            product.mul(p.pairing(pk.getX(), sigma.getBList().get(i)).powZn(messages.get(i)));
+        }
+        final Element lhs = p.pairing(pk.getX(), sigma.getA())
+                .mul(p.pairing(pk.getX(), sigma.getB()).powZn(messages.get(0)))
+                .mul(product);
+        return lhs.isEqual(p.pairing(pk.getGenerator(), sigma.getC()));
     }
 }

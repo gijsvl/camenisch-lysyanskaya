@@ -31,10 +31,6 @@ public class PublicKey {
         return generator;
     }
 
-    public Element getGeneratorT() {
-        return generatorT;
-    }
-
     public Element getX() {
         return X;
     }
