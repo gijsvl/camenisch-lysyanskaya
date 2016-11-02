@@ -7,6 +7,7 @@ I cannot guarantee the security of this library, and one should not use this in 
 
 ### Usage ###
 Note: random messages are generated in this example
+
 Keygen:
 ```java
 final KeyPair keyPair = CLSign.keyGen(messageSize);
