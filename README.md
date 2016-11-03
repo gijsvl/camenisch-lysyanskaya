@@ -5,6 +5,19 @@ Implementation of the CL signature scheme
 This is an experimental library and is only at its first version. The API could still be updated in the near future.
 I cannot guarantee the security of this library, and one should not use this in production.
 
+### Setup ###
+
+* Install PBC on your machine (Hopefully we can solve this in time)
+
+https://crypto.stanford.edu/pbc/
+
+* Setup a shared library
+
+http://gas.dia.unisa.it/projects/jpbc/docs/pbcwrapper.html
+
+### Run tests ###
+* mvn clean test
+
 ### Usage ###
 Note: random messages are generated in this example
 

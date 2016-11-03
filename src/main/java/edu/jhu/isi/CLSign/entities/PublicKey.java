@@ -34,14 +34,16 @@ public class PublicKey {
     private Element X;
     private Element Y;
     private List<Element> Z = new ArrayList<>();
+    private List<Element> W = new ArrayList<>();
 
-    public PublicKey(final Pairing pairing, final Element generator, final Element generatorT, final Element x, final Element y, final List<Element> z) {
+    public PublicKey(final Pairing pairing, final Element generator, final Element generatorT, final Element x, final Element y, final List<Element> z, final List<Element> w) {
         this.pairing = pairing;
         this.generator = generator;
         this.generatorT = generatorT;
         X = x;
         Y = y;
         Z = z;
+        W = w;
     }
 
     public Pairing getPairing() {
@@ -66,5 +68,13 @@ public class PublicKey {
 
     public List<Element> getZ() {
         return Z;
+    }
+
+    public Element getW(final int index) {
+        return W.get(index);
+    }
+
+    public List<Element> getW() {
+        return W;
     }
 }

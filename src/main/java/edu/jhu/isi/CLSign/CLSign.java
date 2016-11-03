@@ -47,10 +47,14 @@ public class CLSign {
     private static PublicKey createPublicKey(final Pairing pairing, final SecretKey sk) {
         final Element generator = pairing.getG1().newRandomElement().getImmutable();
         final Element generatorT = pairing.getGT().newRandomElement().getImmutable();
+        final Element X = generator.powZn(sk.getX());
+        final Element Y = generator.powZn(sk.getY());
         final List<Element> Z = sk.getZ().stream()
                 .map(generator::powZn).collect(Collectors.toList());
+        final List<Element> W = sk.getZ().stream()
+                .map(Y::powZn).collect(Collectors.toList());
         return new PublicKey(pairing, generator, generatorT,
-                generator.powZn(sk.getX()), generator.powZn(sk.getY()), Z);
+                X, Y, Z, W);
     }
 
     private static SecretKey createSecretKey(final Pairing pairing, final int messageSize) {

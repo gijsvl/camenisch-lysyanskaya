@@ -26,10 +26,12 @@ public class CLSignTest {
         assertNotNull(sk);
         assertEquals(messageSize, sk.getZ().size());
         assertEquals(messageSize, pk.getZ().size());
+        assertEquals(messageSize, pk.getW().size());
         assertEquals(pk.getGenerator().powZn(sk.getX()), pk.getX());
         assertEquals(pk.getGenerator().powZn(sk.getY()), pk.getY());
         for (int i = 0; i < messageSize; i++) {
             assertEquals(pk.getGenerator().powZn(sk.getZ(i)), pk.getZ(i));
+            assertEquals(pk.getY().powZn(sk.getZ(i)), pk.getW(i));
         }
         assertEquals(pk.getPairing().getG1(), pk.getPairing().getG2());
     }
