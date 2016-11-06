@@ -34,6 +34,18 @@ Sign:
 final Signature sigma = CLSign.sign(messages, keyPair);
 ```
 
+Sign Blind:
+```java
+final Element commitment = CLSign.commit(messages, keyPair.getPk());
+final Signature sigma = CLSign.signBlind(commitment, keyPair);
+```
+
+Sign Partially Blind:
+```java
+final Element partialCommitment = CLSign.partialCommit(messages.subList(0, messageSize - 2), keyPair.getPk());
+final Signature sigma = CLSign.signPartiallyBlind(messages.subList(messageSize - 2, messageSize), partialCommitment, keyPair);
+```
+
 Verify:
 ```java
 CLSign.verify(messages, sigma, keyPair.getPk());
