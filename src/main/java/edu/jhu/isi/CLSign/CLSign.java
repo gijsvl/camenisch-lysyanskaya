@@ -21,10 +21,10 @@
  */
 package edu.jhu.isi.CLSign;
 
-import edu.jhu.isi.CLSign.entities.KeyPair;
-import edu.jhu.isi.CLSign.entities.PublicKey;
-import edu.jhu.isi.CLSign.entities.SecretKey;
-import edu.jhu.isi.CLSign.entities.Signature;
+import edu.jhu.isi.CLSign.keygen.KeyPair;
+import edu.jhu.isi.CLSign.keygen.PublicKey;
+import edu.jhu.isi.CLSign.keygen.SecretKey;
+import edu.jhu.isi.CLSign.sign.Signature;
 import edu.jhu.isi.CLSign.keygen.KeyGen;
 import edu.jhu.isi.CLSign.sign.Sign;
 import edu.jhu.isi.CLSign.verify.Verify;
@@ -43,11 +43,17 @@ public class CLSign {
     }
 
     public static Element commit(final List<ZrElement> messages, final PublicKey pk) {
-        Element commitment = pk.getGenerator().powZn(messages.get(0));
-        for (int i = 1; i < messages.size(); i++) {
-            commitment = commitment.mul(pk.getZ(i).powZn(messages.get(i)));
+        if (messages.size() != pk.getZ().size()) {
+            throw new IllegalStateException("Public key should be generated with the correct message size");
         }
-        return commitment.getImmutable();
+        return doCommit(messages, pk);
+    }
+
+    public static Element partialCommit(final List<ZrElement> messages, final PublicKey pk) {
+        if (messages.size() > pk.getZ().size()) {
+            throw new IllegalStateException("Public key should be generated with a larger message size");
+        }
+        return doCommit(messages, pk);
     }
 
     public static Signature sign(final List<ZrElement> messages, final KeyPair keys) {
@@ -59,9 +65,27 @@ public class CLSign {
         return Sign.sign(commitment, keys);
     }
 
+    public static Signature signPartiallyBlind(final List<ZrElement> messages, final Element commitment, final KeyPair keys) {
+        final List<Element> Z = keys.getPk().getZ();
+        final List<Element> subKey = Z.subList(Z.size() - messages.size(), Z.size());
+        final Element extendCommitment = keys.getPk().getPairing().getG1().newOneElement();
+        for (int i = 0; i < messages.size(); i++) {
+            extendCommitment.mul(subKey.get(i).powZn(messages.get(i)));
+        }
+        return Sign.sign(commitment.mul(extendCommitment), keys);
+    }
+
     public static boolean verify(final List<ZrElement> messages, final Signature sigma, final PublicKey pk) {
         return Verify.aFormedCorrectly(sigma, pk)
                 && Verify.bFormedCorrectly(sigma, pk)
                 && Verify.cFormedCorrectly(messages, sigma, pk);
+    }
+
+    private static Element doCommit(final List<ZrElement> messages, final PublicKey pk) {
+        Element commitment = pk.getGenerator().powZn(messages.get(0));
+        for (int i = 1; i < messages.size(); i++) {
+            commitment = commitment.mul(pk.getZ(i).powZn(messages.get(i)));
+        }
+        return commitment.getImmutable();
     }
 }

@@ -1,7 +1,5 @@
 package edu.jhu.isi.CLSign.keygen;
 
-import edu.jhu.isi.CLSign.entities.PublicKey;
-import edu.jhu.isi.CLSign.entities.SecretKey;
 import it.unisa.dia.gas.jpbc.Element;
 import it.unisa.dia.gas.jpbc.Pairing;
 import it.unisa.dia.gas.jpbc.PairingParameters;

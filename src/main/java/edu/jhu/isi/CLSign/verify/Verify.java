@@ -1,7 +1,7 @@
 package edu.jhu.isi.CLSign.verify;
 
-import edu.jhu.isi.CLSign.entities.PublicKey;
-import edu.jhu.isi.CLSign.entities.Signature;
+import edu.jhu.isi.CLSign.keygen.PublicKey;
+import edu.jhu.isi.CLSign.sign.Signature;
 import it.unisa.dia.gas.jpbc.Element;
 import it.unisa.dia.gas.jpbc.Pairing;
 import it.unisa.dia.gas.plaf.jpbc.field.z.ZrElement;

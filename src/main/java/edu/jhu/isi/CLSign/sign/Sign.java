@@ -1,9 +1,8 @@
 package edu.jhu.isi.CLSign.sign;
 
-import edu.jhu.isi.CLSign.entities.KeyPair;
-import edu.jhu.isi.CLSign.entities.PublicKey;
-import edu.jhu.isi.CLSign.entities.SecretKey;
-import edu.jhu.isi.CLSign.entities.Signature;
+import edu.jhu.isi.CLSign.keygen.KeyPair;
+import edu.jhu.isi.CLSign.keygen.PublicKey;
+import edu.jhu.isi.CLSign.keygen.SecretKey;
 import it.unisa.dia.gas.jpbc.Element;
 import it.unisa.dia.gas.plaf.jpbc.field.z.ZrElement;
 

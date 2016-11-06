@@ -1,9 +1,10 @@
 package edu.jhu.isi.CLSign;
 
-import edu.jhu.isi.CLSign.entities.KeyPair;
-import edu.jhu.isi.CLSign.entities.PublicKey;
-import edu.jhu.isi.CLSign.entities.SecretKey;
-import edu.jhu.isi.CLSign.entities.Signature;
+import edu.jhu.isi.CLSign.keygen.KeyPair;
+import edu.jhu.isi.CLSign.keygen.PublicKey;
+import edu.jhu.isi.CLSign.keygen.SecretKey;
+import edu.jhu.isi.CLSign.sign.Signature;
+import it.unisa.dia.gas.jpbc.Element;
 import it.unisa.dia.gas.plaf.jpbc.field.z.ZrElement;
 import org.junit.Test;
 
@@ -102,5 +103,50 @@ public class CLSignTest {
     public void testInstantiate() throws Exception {
         final CLSign clSign = new CLSign();
         assertNotNull(clSign);
+    }
+
+    @Test(expected = IllegalStateException.class)
+    public void testCommit_wrongMessageSize() throws Exception {
+        final int messageSize = 5;
+        final KeyPair keyPair = CLSign.keyGen(messageSize);
+        final List<ZrElement> messages = IntStream.range(0, messageSize + 1)
+                .mapToObj(i -> (ZrElement) keyPair.getPk().getPairing().getZr().newRandomElement().getImmutable())
+                .collect(Collectors.toList());
+        CLSign.commit(messages, keyPair.getPk());
+    }
+
+    @Test(expected = IllegalStateException.class)
+    public void testPartialCommit_wrongMessageSize() throws Exception {
+        final int messageSize = 5;
+        final KeyPair keyPair = CLSign.keyGen(messageSize);
+        final List<ZrElement> messages = IntStream.range(0, messageSize + 1)
+                .mapToObj(i -> (ZrElement) keyPair.getPk().getPairing().getZr().newRandomElement().getImmutable())
+                .collect(Collectors.toList());
+        CLSign.partialCommit(messages, keyPair.getPk());
+    }
+
+    @Test
+    public void testBlindSignature() throws Exception {
+        final int messageSize = 5;
+        final KeyPair keyPair = CLSign.keyGen(messageSize);
+        final List<ZrElement> messages = IntStream.range(0, messageSize)
+                .mapToObj(i -> (ZrElement) keyPair.getPk().getPairing().getZr().newRandomElement().getImmutable())
+                .collect(Collectors.toList());
+        final Element commitment = CLSign.commit(messages, keyPair.getPk());
+        final Signature sigma = CLSign.signBlind(commitment, keyPair);
+        assertTrue(CLSign.verify(messages, sigma, keyPair.getPk()));
+    }
+
+    @Test
+    public void testPartiallyBlindSignature() throws Exception {
+        final int messageSize = 5;
+        final KeyPair keyPair = CLSign.keyGen(messageSize);
+        final List<ZrElement> messages = IntStream.range(0, messageSize)
+                .mapToObj(i -> (ZrElement) keyPair.getPk().getPairing().getZr().newRandomElement().getImmutable())
+                .collect(Collectors.toList());
+        final Element partialCommitment = CLSign.partialCommit(messages.subList(0, messageSize - 2), keyPair.getPk());
+        final Signature sigma = CLSign.signPartiallyBlind(messages.subList(messageSize - 2, messageSize),
+                partialCommitment, keyPair);
+        assertTrue(CLSign.verify(messages, sigma, keyPair.getPk()));
     }
 }
