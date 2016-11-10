@@ -21,17 +21,20 @@
  */
 package edu.jhu.isi.CLSign;
 
+import edu.jhu.isi.CLSign.keygen.KeyGen;
 import edu.jhu.isi.CLSign.keygen.KeyPair;
 import edu.jhu.isi.CLSign.keygen.PublicKey;
 import edu.jhu.isi.CLSign.keygen.SecretKey;
-import edu.jhu.isi.CLSign.sign.Signature;
-import edu.jhu.isi.CLSign.keygen.KeyGen;
+import edu.jhu.isi.CLSign.proof.Proof;
+import edu.jhu.isi.CLSign.proof.Prover;
 import edu.jhu.isi.CLSign.sign.Sign;
+import edu.jhu.isi.CLSign.sign.Signature;
 import edu.jhu.isi.CLSign.verify.Verify;
 import it.unisa.dia.gas.jpbc.Element;
 import it.unisa.dia.gas.jpbc.Pairing;
 import it.unisa.dia.gas.plaf.jpbc.field.z.ZrElement;
 
+import java.util.ArrayList;
 import java.util.List;
 
 public class CLSign {
@@ -56,16 +59,31 @@ public class CLSign {
         return doCommit(messages, pk);
     }
 
-    public static Signature sign(final List<ZrElement> messages, final KeyPair keys) {
-        final Element commitment = commit(messages, keys.getPk());
-        return signBlind(commitment, keys);
+    public static Proof proofCommitment(final Element commitment, final List<ZrElement> messages, final PublicKey pk) {
+        final List<Element> t = new ArrayList<>();
+        final Element proofComm = Prover.computeProofComm(pk, t, messages.size());
+        final Element challenge = Prover.computeChallenge(commitment, proofComm, pk);
+        final List<Element> s = Prover.computeProof(t, messages, challenge);
+
+        return new Proof(proofComm, s);
     }
 
-    public static Signature signBlind(final Element commitment, final KeyPair keys) {
+    public static Signature sign(final List<ZrElement> messages, final KeyPair keys) {
+        final Element commitment = commit(messages, keys.getPk());
         return Sign.sign(commitment, keys);
     }
 
-    public static Signature signPartiallyBlind(final List<ZrElement> messages, final Element commitment, final KeyPair keys) {
+    public static Signature signBlind(final Element commitment, final Proof proof, final KeyPair keys) {
+        if (!Prover.verify(commitment, proof, keys.getPk())) {
+            return null;
+        }
+        return Sign.sign(commitment, keys);
+    }
+
+    public static Signature signPartiallyBlind(final List<ZrElement> messages, final Element commitment, final Proof proof, final KeyPair keys) {
+        if (!Prover.verify(commitment, proof, keys.getPk())) {
+            return null;
+        }
         final List<Element> Z = keys.getPk().getZ();
         final List<Element> subKey = Z.subList(Z.size() - messages.size(), Z.size());
         final Element extendCommitment = keys.getPk().getPairing().getG1().newOneElement();
