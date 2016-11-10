@@ -37,7 +37,7 @@ final Signature sigma = CLSign.sign(messages, keyPair);
 Sign Blind:
 ```java
 final Element commitment = CLSign.commit(messages, keyPair.getPk());
-final Proof proof = CLSign.proofCommitment(partialCommitment, messages, keyPair.getPk());
+final Proof proof = CLSign.proofCommitment(commitment, messages, keyPair.getPk());
 final Signature sigma = CLSign.signBlind(commitment, proof, keyPair);
 ```
 
